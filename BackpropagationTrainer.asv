@@ -131,9 +131,11 @@ classdef BackpropagationTrainer<handle
             %its derivative with respect to a weight is the output of the
             %neuron from the previous layer transfering its value through
             %that weight
-            prevLayer = self.network.layers{lastLayerIndex - 1};            
+            prevLayer = self.network.layers{lastLayerIndex - 1};
+            if self.network.biasPresent{lastLayerIndex - 1}
+                prevLayer = [ones(size(prevLayer, 1), 1); prevLayer];
+            end
             weightsGrad{lastLayerIndex} = prevLayer' * errorTerms{lastLayerIndex};
-                %./ size(errorTerms{lastLayerIndex}, 1);
             
             %%%%%%%Calculations for the inner layers%%%%%%%%%%%%%%%                                       
             for k = lastLayerIndex - 1:-1:2
@@ -144,15 +146,14 @@ classdef BackpropagationTrainer<handle
                 %sum(n over all neurons of k+1)Bn^(k+1) * dSn^k/dOi^k
                 dv = self.network.activationFnDv{k}(self.network.layers{k});                             
                 
-                temp = errorTerms{k + 1} * weights';
-                
+                temp = errorTerms{k+1} * weights(2:end)';
                 errorTerms{k} = dv .* temp;
-                if self.network.biasPresent{k}
-                    errorTerms{k} = errorTerms{k} (:, 2:end);
+                
+                if self.network.biasPresent{lastLayerIndex - 1}
+                    prevLayer = [1; self.network.layers{k - 1}];
+                else
+                    prevLayer = self.network.layers{k - 1};
                 end
-                
-                prevLayer = self.network.layers{k - 1};
-                
 
                 %Calculate the weights gradient as 
                 %deltaWij^k =  Bj^k * (dSj^k/dWij^k)

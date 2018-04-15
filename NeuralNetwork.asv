@@ -53,56 +53,13 @@ classdef NeuralNetwork<handle
             network.costFnDv = costFnDv;
         end
         
-        %Add a layer to the network        
-        %nNeuronsInLayer: the number of neurons in this layer        
-        %biasPresent: TRUE if this layer has a bias unit
-        %activationFn/Dev: the activation function and its derivative for all neurons in this layer       
-        function addLayer(network, nNeuronsInLayer, biasPresent, activationFn, activationFnDev)
-            %determine the position in which the layer will be appended to
-            %the cell array
-            index = size(network.layers, 2) + 1;
-            
-            network.biasPresent{index} = biasPresent;
-            
-            %init the layer as a zero column vector
-            if(biasPresent)
-                network.layers{index} = zeros(1, nNeuronsInLayer + 1);
-            else
-                network.layers{index} = zeros(1, nNeuronsInLayer);
-            end
-                        
-            %Find the number of neurons in the previous layer
-            prevLayer = network.layers{index - 1};
-            nNeuronsInPrevLayer = size(prevLayer, 2);
-                
-            %Create the weights matrix and append it to the weights
-            %cell array
-            layerWeights = zeros(nNeuronsInPrevLayer, nNeuronsInLayer);
-            network.weights{index} = layerWeights;
-                               
-            network.activationFn{index} = activationFn;
-            network.activationFnDv{index} = activationFnDev;
-        end
-        
-        %Initializes the weights with random normally distributed values
-        %layers is a row vector with layer indices to be initialized; [] for
-        %all layers        
-        %mean, std: parameters of the normal distribution       
-        function initWeights(network, layers, mean, std)            
-            if size(layers) == 0
-                layers = 1:1:length(network.weights);
-            end
-            
-            %Initialize the normal weights (layer to layer)
-            for i = 1 : length(layers)
-                network.weights{layers(1, i)} = ...
-                    normrnd(mean, std, size(network.weights{layers(1, i)}));
-            end            
-        end       
-        
         %Calculates the output of the network given a list of input vectors
-        %X is a matrix with input vectors per row
-        %The output is a matrix with output vectors per row
+        %X is a matrix with input vectors per row (inputDim X noInputs)
+        %If a bias unit is present on the input layer, X may or may not
+        %include it. If it is not present the function will add it as a
+        %column of ones at the end of X
+        %The output is a matrix with output vectors per row (outputDim X
+        %noInputs)                
         function output = calculateOutput(network, X)         
             %Number of layers in the network
             layersCount = length(network.layers);
@@ -127,7 +84,64 @@ classdef NeuralNetwork<handle
             end
             %The output of the network is the output of the last layer
             output = network.layers{layersCount};
-        end                       
-
+        end
+        
+        %Initializes the weights with random normally distributed values
+        %layers: row vector with layer indices to be initialized; [] for
+        %all layers        
+        %mean, std: parameters of the normal distribution       
+        function initWeights(network, layers, mean, std)            
+            if size(layers) == 0
+                layers = 1:1:length(network.weights);
+            end
+            
+            %Initialize the normal weights (layer to layer)
+            for i = 1 : length(layers)
+                network.weights{layers(1, i)} = ...
+                    normrnd(mean, std, size(network.weights{layers(1, i)}));
+            end            
+        end       
+        
+        %Add a layer to the network        
+        %nNeuronsInLayer: the number of neurons in this layer        
+        %biasPresent: TRUE if this layer has a bias unit
+        %activationFn/Dev: the activation function and its derivative for all neurons in this layer       
+        function addLayer(network, nNeuronsInLayer, biasPresent, activationFn, activationFnDev)
+            %determine the position in which the layer will be appended to
+            %the cell array
+            index = size(network.layers, 2) + 1;
+            
+            network.biasPresent{index} = biasPresent;
+            
+            %init the layer as a zero column vector
+            if(biasPresent)
+                layer = zeros(1, nNeuronsInLayer + 1);
+            else
+                layer = zeros(1, nNeuronsInLayer);
+            end
+            
+            network.layers{index} = layer;            
+            %If we have more than one layer, we need to create the weights
+            %matrix from the previous one to the new layer
+            if index > 1
+                %Find the number of neurons in the previous layer
+                prevLayer = network.layers{index - 1};
+                nNeuronsInPrevLayer = size(prevLayer, 2);
+                
+                %if a bias unit is present on the previous layer, adjust
+                %the number of neurons
+                nNeuronsInPrevLayer = nNeuronsInPrevLayer + 1;
+                
+                %Create the weights matrix and append it to the weights
+                %cell array
+                %The weights of connections from a neuron in the previous
+                %layer to all neurons in the current one are placed on row
+                layerWeights = zeros(nNeuronsInPrevLayer, nNeuronsInLayer);
+                network.weights{index} = layerWeights;
+                               
+                network.activationFn{index} = activationFn;
+                network.activationFnDv{index} = activationFnDev;
+            end
+        end
     end
 end
