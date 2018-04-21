@@ -13,7 +13,7 @@ Pattern(:,2) = (Pattern(:,2) - mean(Pattern(:,2))) ./ std(Pattern(:,2));
 Pattern(:,3) = (Pattern(:,3) - mean(Pattern(:,3))) ./ std(Pattern(:,3));
 %Pattern(:,1) = Pattern(:,1);
 
-nn = NeuralNetwork(2, true, @CostFunctions.halfSumOfSquares, @CostFunctions.halfSumOfSquaresDv);
+nn = NeuralNetwork(1, true, @CostFunctions.halfSumOfSquares, @CostFunctions.halfSumOfSquaresDv);
 %nn.addLayer(11, true, @ActivationFunctions.tanh, @ActivationFunctions.tanhDv);
 %nn.addLayer(51, true, @ActivationFunctions.tanh, @ActivationFunctions.tanhDv);
 %nn.addLayer(40, true, @ActivationFunctions.tanh, @ActivationFunctions.tanhDv);
@@ -26,15 +26,7 @@ nn.addLayer(40, true, @ActivationFunctions.tanh, @ActivationFunctions.tanhDv);
 nn.addLayer(2, false, @ActivationFunctions.identity, @ActivationFunctions.identityDv);
 nn.initWeights([], 0, 1);
 
-%figure;
-
-trainer = BackpropagationTrainer;
-trainer.network = nn;
-trainer.learningRate = 0.0002;
-trainer.momentum = 0. ;
-trainer.batchSize = 0;
-trainer.epochs = 240000;
-trainer.callbackFn = @CallbackFunctions.twoOutputPlot;
-trainer.XTrain = Pattern(:,1);
-trainer.YTrain = Pattern(:,2:3);
+trainer = BackpropagationTrainer(nn, 8000, Pattern(:,1), Pattern(:,2:3), ... 
+    0.01, 0.1, 0, true, 0, @CallbackFunctions.oneOutputPlot, 10 ...
+);
 trainer.train();

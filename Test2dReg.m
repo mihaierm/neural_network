@@ -22,13 +22,7 @@ nn.addLayer(50, true, @ActivationFunctions.tanh, @ActivationFunctions.tanhDv);
 nn.addLayer(1, false, @ActivationFunctions.identity, @ActivationFunctions.identityDv);
 nn.initWeights([], 0, 0.01);
 
-trainer = BackpropagationTrainer;
-trainer.network = nn;
-trainer.learningRate = 0.003;
-trainer.momentum = 0.9 ;
-trainer.batchSize = 0;
-trainer.epochs = 2000;
-trainer.callbackFn = @CallbackFunctions.oneOutputPlot;
-trainer.XTrain = Pattern(:,1);
-trainer.YTrain = Pattern(:,2);
+trainer = BackpropagationTrainer(nn, 8000, Pattern(:,1), Pattern(:,2), ... 
+    0.05, 1.2, 5, true, 0, @CallbackFunctions.oneOutputPlot, 100 ...
+);
 trainer.train();
